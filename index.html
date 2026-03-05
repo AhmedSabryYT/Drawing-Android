@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing App - Android Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tool-label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #495057;
+            text-transform: uppercase;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        input[type="color"] {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: #dee2e6;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .size-display {
+            font-weight: 600;
+            color: #495057;
+            font-size: 12px;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        canvas {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+            max-width: 100%;
+            touch-action: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            border-top: 2px solid #e9ecef;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .color-preview {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #dee2e6;
+            background: #000000;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                gap: 8px;
+                padding: 10px;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            input[type="range"] {
+                width: 80px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Drawing App</h1>
+            <p>Draw, sketch, and create on your Android device</p>
+        </div>
+
+        <div class="toolbar">
+            <!-- Drawing Tools -->
+            <div class="tool-group">
+                <span class="tool-label">Tools</span>
+                <button id="penBtn" class="active" title="Draw with pen">✏️ Pen</button>
+                <button id="eraserBtn" title="Erase content">🧹 Eraser</button>
+                <button id="lineBtn" title="Draw straight lines">📏 Line</button>
+                <button id="circleBtn" title="Draw circles">⭕ Circle</button>
+                <button id="rectBtn" title="Draw rectangles">▭ Rectangle</button>
+            </div>
+
+            <!-- Color & Size -->
+            <div class="tool-group">
+                <span class="tool-label">Color</span>
+                <input type="color" id="colorPicker" value="#000000" title="Pick a color">
+                <div class="color-preview" id="colorPreview"></div>
+            </div>
+
+            <div class="tool-group">
+                <span class="tool-label">Size</span>
+                <input type="range" id="brushSize" min="1" max="50" value="3">
+                <span class="size-display" id="sizeDisplay">3</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="tool-group">
+                <span class="tool-label">Actions</span>
+                <button id="undoBtn" title="Undo last action">↶ Undo</button>
+                <button id="redoBtn" title="Redo last action">↷ Redo</button>
+                <button id="clearBtn" title="Clear canvas">🗑️ Clear</button>
+                <button id="downloadBtn" title="Download drawing">⬇️ Download</button>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="footer">
+            <p>💡 Tip: Use your finger or mouse to draw. Supports touch gestures on mobile devices.</p>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = Math.min(container.clientWidth - 40, 800);
+            canvas.height = 600;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // State management
+        let isDrawing = false;
+        let currentTool = 'pen';
+        let currentColor = '#000000';
+        let brushSize = 3;
+        let history = [];
+        let historyStep = -1;
+
+        // DOM elements
+        const penBtn = document.getElementById('penBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+        const lineBtn = document.getElementById('lineBtn');
+        const circleBtn = document.getElementById('circleBtn');
+        const rectBtn = document.getElementById('rectBtn');
+        const colorPicker = document.getElementById('colorPicker');
+        const colorPreview = document.getElementById('colorPreview');
+        const brushSizeSlider = document.getElementById('brushSize');
+        const sizeDisplay = document.getElementById('sizeDisplay');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Initialize
+        saveHistory();
+
+        // Tool selection
+        function selectTool(tool) {
+            currentTool = tool;
+            [penBtn, eraserBtn, lineBtn, circleBtn, rectBtn].forEach(btn => btn.classList.remove('active')); 
+            
+            if (tool === 'pen') penBtn.classList.add('active');
+            else if (tool === 'eraser') eraserBtn.classList.add('active');
+            else if (tool === 'line') lineBtn.classList.add('active');
+            else if (tool === 'circle') circleBtn.classList.add('active');
+            else if (tool === 'rect') rectBtn.classList.add('active');
+        }
+
+        penBtn.addEventListener('click', () => selectTool('pen'));
+        eraserBtn.addEventListener('click', () => selectTool('eraser'));
+        lineBtn.addEventListener('click', () => selectTool('line'));
+        circleBtn.addEventListener('click', () => selectTool('circle'));
+        rectBtn.addEventListener('click', () => selectTool('rect'));
+
+        // Color picker
+        colorPicker.addEventListener('change', (e) => {
+            currentColor = e.target.value;
+            colorPreview.style.background = currentColor;
+        });
+
+        // Brush size
+        brushSizeSlider.addEventListener('input', (e) => {
+            brushSize = e.target.value;
+            sizeDisplay.textContent = brushSize;
+        });
+
+        // Drawing functions
+        let startX, startY;
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (e.clientX || e.touches[0].clientX) - rect.left,
+                y: (e.clientY || e.touches[0].clientY) - rect.top
+            };
+        }
+
+        function drawPen(x, y) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = brushSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function drawLine(fromX, fromY, toX, toY) {
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = brushSize;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+
+        function drawCircle(fromX, fromY, toX, toY) {
+            const radius = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
+            ctx.beginPath();
+            ctx.arc(fromX, fromY, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = brushSize;
+            ctx.stroke();
+        }
+
+        function drawRect(fromX, fromY, toX, toY) {
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = brushSize;
+            ctx.strokeRect(fromX, fromY, toX - fromX, toY - fromY);
+        }
+
+        function saveHistory() {
+            historyStep++;
+            history = history.slice(0, historyStep);
+            history.push(canvas.toDataURL());
+        }
+
+        function restoreHistory(step) {
+            const img = new Image();
+            img.src = history[step];
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+            };
+        }
+
+        // Mouse/Touch events
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const pos = getMousePos(e);
+            startX = pos.x;
+            startY = pos.y;
+
+            if (currentTool === 'pen') {
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = brushSize;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+            } else if (currentTool === 'eraser') {
+                ctx.clearRect(startX - brushSize / 2, startY - brushSize / 2, brushSize, brushSize);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+
+            const pos = getMousePos(e);
+
+            if (currentTool === 'pen') {
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            } else if (currentTool === 'eraser') {
+                ctx.clearRect(pos.x - brushSize / 2, pos.y - brushSize / 2, brushSize, brushSize);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (!isDrawing) return;
+            isDrawing = false;
+
+            if (currentTool === 'pen' || currentTool === 'eraser') {
+                ctx.closePath();
+            }
+            saveHistory();
+        });
+
+        // Touch events
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            const event = new MouseEvent('mousedown', {
+                clientX: pos.x + canvas.getBoundingClientRect().left,
+                clientY: pos.y + canvas.getBoundingClientRect().top
+            });
+            canvas.dispatchEvent(event);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const pos = getMousePos(e);
+            const event = new MouseEvent('mousemove', {
+                clientX: pos.x + canvas.getBoundingClientRect().left,
+                clientY: pos.y + canvas.getBoundingClientRect().top
+            });
+            canvas.dispatchEvent(event);
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const event = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(event);
+        });
+
+        // Actions
+        undoBtn.addEventListener('click', () => {
+            if (historyStep > 0) {
+                historyStep--;
+                restoreHistory(historyStep);
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (historyStep < history.length - 1) {
+                historyStep++;
+                restoreHistory(historyStep);
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the canvas?')) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                saveHistory();
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'drawing.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // Initialize color preview
+        colorPreview.style.background = currentColor;
+    </script>
+</body>
+</html>
